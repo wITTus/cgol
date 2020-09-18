@@ -8,6 +8,7 @@ use rand::Rng;
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")
+        .about("Run with e.g. `cgol -c $COLUMNS -r $[ LINES-2 ] -i 30'")
         .arg(Arg::with_name("rows").short('r').about("Number of rows").takes_value(true))
         .arg(Arg::with_name("columns").short('c').about("Number of columns").takes_value(true))
         .arg(Arg::with_name("interval").short('i').about("Tick interval (in ms)").takes_value(true))
