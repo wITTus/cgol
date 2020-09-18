@@ -8,5 +8,4 @@ edition = "2018"
 
 [dependencies]
 rand = "*"
-termion = "*"
 clap = "3.0.0-beta.1"

@@ -1,5 +1,3 @@
-extern crate termion;
-
 use std::{thread, time};
 use std::io::{stdout, Stdout, Write};
 
