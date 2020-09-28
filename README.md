@@ -9,5 +9,5 @@ cargo build --release
 ### Run
 
 ```
-cgol -c $COLUMNS -r $[ LINES-2 ] -i 30
+target/release/cgol -c $COLUMNS -r $[ LINES-3 ] -i 30
 ```
