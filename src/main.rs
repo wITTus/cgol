@@ -19,10 +19,12 @@ fn main() {
     let mut rng = rand::thread_rng();
     let mut field = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
 
+    let mut iteration_counter = 1;
     loop {
-        print(&mut stdout, &field, rows, columns);
+        print(&mut stdout, &field, rows, columns,iteration_counter);
         thread::sleep(time::Duration::from_millis(interval));
         field = apply_rules(field, rows, columns);
+        iteration_counter += 1;
     }
 }
 
@@ -52,20 +54,25 @@ fn neighbours(m: &Vec<bool>, index: i32, rows: i32, columns: i32) -> usize {
 }
 
 #[allow(unused_must_use)]
-fn print(stdout: &mut Stdout, map: &Vec<bool>, rows: u32, columns: u32) {
+fn print(stdout: &mut Stdout, map: &Vec<bool>, rows: u32, columns: u32, iter_count: u32) {
     stdout.write("\x1B[2J\x1B[2J\x1B[1;1H".as_bytes());
     stdout.write(("\u{25AC}".repeat(columns as usize) + "\n").as_bytes());
+    let mut column: String = "".to_owned();
+    let mut columns_string: String = "".to_owned();
     for r in 0..rows {
         for c in 0..columns {
             let b = map[(r * columns + c) as usize];
-            let c = match b {
-                true => "\u{2588}",
-                false => " "
+            let _ = match b {
+                true => column.push_str("\u{2588}"),
+                false => column.push_str(" ")
             };
-            stdout.write(c.as_bytes());
+            // column.push_str("\n");
+            columns_string.push_str(column.as_str());
+            column.clear();
         }
-        stdout.write("\n".as_bytes());
+        stdout.write(columns_string.as_bytes());
     }
     stdout.write("\u{25AC}".repeat(columns as usize).as_bytes());
+    stdout.write(iter_count.to_string().as_bytes());
     stdout.flush();
 }
