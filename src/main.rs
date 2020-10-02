@@ -1,79 +1,53 @@
-use std::{thread, time};
+use std::{fs, io, thread, time};
+use std::cmp::max;
 use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
-use rand::Rng;
+
+use crate::field::Field;
+
+mod field;
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")
-        .about("Run with e.g. `cgol -c $COLUMNS -r $[ LINES-2 ] -i 30'")
+        .about("Run with e.g. `cgol -c $COLUMNS -r $[ LINES-3 ] -i 30 -p patterns/glider.cells'")
         .arg(Arg::with_name("rows").short('r').about("Number of rows").takes_value(true))
         .arg(Arg::with_name("columns").short('c').about("Number of columns").takes_value(true))
         .arg(Arg::with_name("interval").short('i').about("Tick interval (in ms)").takes_value(true))
+        .arg(Arg::with_name("pattern").short('p').about("Load pattern from file").takes_value(true))
         .get_matches();
-    let rows = matches.value_of("rows").map(|v| v.parse::<u32>().unwrap()).unwrap_or(24);
-    let columns = matches.value_of("columns").map(|v| v.parse::<u32>().unwrap()).unwrap_or(80);
-    let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(50);
+
+    let rows = matches.value_of("rows").map(|v| v.parse::<usize>().unwrap()).unwrap_or(21);
+    let columns = matches.value_of("columns").map(|v| v.parse::<usize>().unwrap()).unwrap_or(80);
+    let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
+    let pattern = matches.value_of("pattern").map(|p| load_pattern(p, rows, columns).expect("Couldn't open .cells file"));
 
     let mut stdout = stdout();
-    let mut rng = rand::thread_rng();
-    let mut field = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
-    let mut iteration_counter = 1;
+    let mut field = pattern.unwrap_or_else(|| Field::from_random(rows, columns));
 
     loop {
-        print(&mut stdout, &field, rows, columns,iteration_counter);
+        print(&mut stdout, field.to_string().as_str());
         thread::sleep(time::Duration::from_millis(interval));
-        field = apply_rules(field, rows, columns);
-        iteration_counter += 1;
+        field.apply_rules();
     }
 }
 
-fn apply_rules(field: Vec<bool>, rows: u32, columns: u32) -> Vec<bool> {
-    field.iter().enumerate()
-        .map(|(i, alive)| match neighbours(&field, i as i32, rows as i32, columns as i32) {
-            2 => true & alive,
-            3 => true,
-            _ => false
-        }).collect()
-}
+fn load_pattern(pattern_file: &str, rows: usize, columns: usize) -> io::Result<Field> {
+    let raw = fs::read_to_string(pattern_file)?;
+    let lines: Vec<&str> = raw.lines()
+        .into_iter()
+        .filter(|&l| !l.starts_with("!"))
+        .map(|l| l.trim_end())
+        .collect();
 
-fn neighbours(m: &Vec<bool>, index: i32, rows: i32, columns: i32) -> usize {
-    [
-        index - columns - 1, index - columns, index - columns + 1,
-        index - 1, /*                      */ index + 1,
-        index + columns - 1, index + columns, index + columns + 1
-    ]
-        .iter()
-        .map(|&idx| match idx {
-            i if i < 0 => false,
-            i if i >= columns * rows => false,
-            i => *m.get(i as usize).expect("Lookup failed")
-        })
-        .filter(|i| { matches!(i, true) })
-        .count()
+    let req_rows = max(rows, lines.len());
+    let req_columns = max(columns, lines.iter().map(|&l| l.len()).max().expect("Couldn't read pattern file"));
+
+    Ok(Field::from_string(lines, req_rows, req_columns))
 }
 
 #[allow(unused_must_use)]
-fn print(stdout: &mut Stdout, map: &Vec<bool>, rows: u32, columns: u32, iter_count: u32) {
-    let mut output = String::new();
-    output += "\x1B[2J\x1B[2J\x1B[1;1H";
-    output += "\u{25AC}".repeat(columns as usize).as_str();
-    output += "\n";
-    for r in 0..rows {
-        for c in 0..columns {
-            let b = map[(r * columns + c) as usize];
-            let c = match b {
-                true => "\u{2588}",
-                false => " "
-            };
-            output += c;
-        }
-        output += "\n";
-    }
-    output += "\u{25AC}".repeat(columns as usize).as_str();
-    output += "\n";
-    output += iter_count.to_string().as_str();
-
-    stdout.write(output.as_bytes());
+fn print(stdout: &mut Stdout, field: &str) {
+    stdout.write(field.as_bytes());
     stdout.flush();
 }
