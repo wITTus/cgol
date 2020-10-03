@@ -9,5 +9,18 @@ cargo build --release
 ### Run
 
 ```
-target/release/cgol -c $COLUMNS -r $[ LINES-3 ] -i 30
+cd target/release
+./cgol
+```
+
+### Fullscreen
+
+```
+./cgol -c $COLUMNS -r $[ LINES-3 ] -i 30
+```
+
+### High Resolution Mode
+
+```
+./cgol -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -i 30 -x
 ```

@@ -4,7 +4,7 @@ use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
-use crate::field::Field;
+use crate::field::{Field, gfx_cls};
 
 mod field;
 
@@ -15,18 +15,27 @@ fn main() {
         .arg(Arg::with_name("columns").short('c').about("Number of columns").takes_value(true))
         .arg(Arg::with_name("interval").short('i').about("Tick interval (in ms)").takes_value(true))
         .arg(Arg::with_name("pattern").short('p').about("Load pattern from file").takes_value(true))
+        .arg(Arg::with_name("highres").short('x').about("Use high resolution"))
         .get_matches();
 
     let rows = matches.value_of("rows").map(|v| v.parse::<usize>().unwrap()).unwrap_or(21);
     let columns = matches.value_of("columns").map(|v| v.parse::<usize>().unwrap()).unwrap_or(80);
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
     let pattern = matches.value_of("pattern").map(|p| load_pattern(p, rows, columns).expect("Couldn't open .cells file"));
+    let highres = matches.is_present("highres");
 
     let mut stdout = stdout();
     let mut field = pattern.unwrap_or_else(|| Field::from_random(rows, columns));
 
+    print(&mut stdout, gfx_cls());
+
     loop {
-        print(&mut stdout, field.to_string().as_str());
+        let gfx = match highres {
+            true => field.to_string_highres(),
+            false => field.to_string()
+        };
+
+        print(&mut stdout, gfx.as_str());
         thread::sleep(time::Duration::from_millis(interval));
         field.next_iteration();
     }
