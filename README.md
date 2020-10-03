@@ -16,11 +16,23 @@ cd target/release
 ### Fullscreen
 
 ```
-./cgol -c $COLUMNS -r $[ LINES-3 ] -i 30
+./cgol -c $COLUMNS -r $[ LINES-3 ] -t 30
 ```
 
 ### High Resolution Mode
 
 ```
-./cgol -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -i 30 -x
+./cgol -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -t 30 -x
+```
+
+### Load Patterns
+
+```
+./cgol --mode empty -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -t 10 -x -p ../../patterns/glidergun.cells -i
+```
+
+### Mark Patterns in Random Output
+
+```
+./cgol -c $[ COLUMNS ] -r $[ LINES - 3 ] -t 50 -p ../../patterns/glider.cells -i -m
 ```

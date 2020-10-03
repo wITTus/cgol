@@ -1,19 +1,28 @@
 use rand::Rng;
 
+use crate::pattern::Pattern;
+
 pub struct Field {
     cells: Vec<bool>,
     ages: Vec<u32>,
     rows: usize,
     columns: usize,
-    iterations: usize
+    iterations: usize,
+    marked: Vec<bool>,
 }
 
 impl Field {
     pub fn new(cells: Vec<bool>, rows: usize, columns: usize) -> Field {
         let iterations = 0;
         let ages = vec![0; rows * columns];
+        let marked = vec![false; rows * columns];
 
-        Field { cells, ages, rows, columns, iterations }
+        Field { cells, ages, rows, columns, iterations, marked }
+    }
+
+    pub fn with_size(rows: usize, columns: usize) -> Field {
+        let cells = vec![false; rows * columns];
+        Field::new(cells, rows, columns)
     }
 
     pub fn from_random(rows: usize, columns: usize) -> Field {
@@ -23,32 +32,70 @@ impl Field {
         Field::new(cells, rows, columns)
     }
 
-    pub fn from_string(lines: Vec<&str>, rows: usize, columns: usize) -> Field {
-        let mut cells = vec![false; rows * columns];
+    pub fn insert(&mut self, pattern: Pattern) {
+        let pattern_2d = proj2d(&pattern.cells, pattern.columns);
 
-        for (y, &line) in lines.iter().enumerate() {
-            for (x, alive) in line.chars().enumerate() {
-                cells[x + y * columns] = alive == 'O';
+        for r in 0..pattern.rows {
+            for c in 0..pattern.columns {
+                self.cells[r * self.columns + c] = pattern_2d[r][c];
             }
         }
-
-        Field::new(cells, rows, columns)
     }
 
     pub fn next_iteration(&mut self) {
-        let view2d = self.cells.as_slice().chunks(self.columns).collect::<Vec<&[bool]>>();
+        let cells_2d = proj2d(&self.cells, self.columns);
 
-        let neighbours = self.calculate_neighbours(&view2d);
+        let neighbours = self.calculate_neighbours(&cells_2d);
         let new_cells = self.apply_rules(neighbours);
         let ages = self.calculate_ages(&new_cells);
 
+        self.marked = vec![false; self.rows * self.columns];
         self.cells = new_cells;
         self.ages = ages;
         self.iterations += 1;
     }
 
-    pub fn calculate_neighbours(&self, view2d: &Vec<&[bool]>) -> Vec<usize> {
-        self.cells.iter().enumerate().map(|(i, _)| neighbours(&view2d, i % self.columns, i / self.columns)).collect()
+    pub fn mark_pattern(&mut self, pattern: &Pattern) {
+        let cells_2d = proj2d(&self.cells, self.columns);
+        let pattern_2d = proj2d(&pattern.cells, pattern.columns);
+
+        let mut matches: Vec<(usize, usize)> = Vec::new();
+        for r in 0..self.rows {
+            for c in 0..self.columns {
+                let mut matching_cells = 0;
+                for rr in 0..pattern.rows {
+                    for cc in 0..pattern.columns {
+                        let rrr = wrap(r, rr as i32, self.rows);
+                        let ccc = wrap(c, cc as i32, self.columns);
+                        if cells_2d[rrr][ccc] != pattern_2d[rr][cc] {
+                            break;
+                        } else {
+                            matching_cells += 1;
+                        }
+                    }
+                }
+                if matching_cells == pattern.rows * pattern.columns {
+                    matches.push((r, c));
+                }
+            }
+        }
+
+        for (r, c) in matches {
+            for rr in 0..pattern.rows {
+                for cc in 0..pattern.columns {
+                    let rrr = wrap(r, rr as i32, self.rows);
+                    let ccc = wrap(c, cc as i32, self.columns);
+                    let idx = rrr * self.columns + ccc;
+                    self.marked[idx] = self.cells[idx] & true;
+                    //println!("Marking {} {} WITH {}", rrr, ccc, self.cells[idx] & true);
+                }
+            }
+            //println!("Found match at {},{}", r, c);
+        }
+    }
+
+    pub fn calculate_neighbours(&self, cells_2d: &Vec<&[bool]>) -> Vec<usize> {
+        self.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.columns, i / self.columns)).collect()
     }
 
     pub fn apply_rules(&self, neighbour_field: Vec<usize>) -> Vec<bool> {
@@ -77,7 +124,7 @@ impl Field {
                 let idx = r * self.columns + c;
                 let alive = self.cells[idx];
                 let age = self.ages[idx];
-                let color = color_by_age(age);
+                let color = if self.marked[idx] { "\x1B[38;5;1m".to_string() } else { color_by_age(age) };
                 let gfx = gfx_cell(alive, color);
                 output += gfx.as_str();
             }
@@ -114,7 +161,7 @@ impl Field {
                 let age_br = *self.ages.get(idxbr).unwrap_or(&0);
 
                 let age = (age_ul + age_ur + age_bl + age_br) / 4;
-                let color = color_by_age(age);
+                let color = if self.marked[idxul] { "\x1B[38;5;1m".to_string() } else { color_by_age(age) };
                 let gfx = gfx_cell_highres(alive_ul, alive_ur, alive_bl, alive_br, color);
                 output += gfx.as_str();
             }
@@ -127,14 +174,26 @@ impl Field {
     }
 }
 
-fn neighbours(rows: &Vec<&[bool]>, x: usize, y: usize) -> usize {
-    let r = rows.len();
-    let c = rows[0].len();
+impl From<Pattern> for Field {
+    fn from(pattern: Pattern) -> Self {
+        let mut field = Field::with_size(pattern.rows, pattern.columns);
+        field.insert(pattern);
+        field
+    }
+}
 
-    let xm1 = (x as i32 - 1).rem_euclid(c as i32) as usize;
-    let ym1 = (y as i32 - 1).rem_euclid(r as i32) as usize;
-    let xp1 = (x as i32 + 1).rem_euclid(c as i32) as usize;
-    let yp1 = (y as i32 + 1).rem_euclid(r as i32) as usize;
+fn proj2d(cells: &Vec<bool>, columns: usize) -> Vec<&[bool]> {
+    cells.as_slice().chunks(columns).collect::<Vec<&[bool]>>()
+}
+
+fn neighbours(cells_2d: &Vec<&[bool]>, x: usize, y: usize) -> usize {
+    let r = cells_2d.len();
+    let c = cells_2d[0].len();
+
+    let xm1 = wrap(x, -1, c);
+    let ym1 = wrap(y, -1, r);
+    let xp1 = wrap(x, 1, c);
+    let yp1 = wrap(y, 1, r);
 
     [
         (xm1, ym1), (x, ym1), (xp1, ym1),
@@ -142,9 +201,13 @@ fn neighbours(rows: &Vec<&[bool]>, x: usize, y: usize) -> usize {
         (xm1, yp1), (x, yp1), (xp1, yp1)
     ]
         .iter()
-        .map(|(x, y)| rows[*y][*x])
+        .map(|(x, y)| cells_2d[*y][*x])
         .filter(|i| { matches!(i, true) })
         .count()
+}
+
+pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
+    (pos as i32 + delta).rem_euclid(lim as i32) as usize
 }
 
 pub const fn gfx_cls() -> &'static str {
@@ -215,6 +278,7 @@ fn color_by_age(age: u32) -> String {
 #[cfg(test)]
 mod tests {
     use crate::field::{Field, neighbours};
+    use crate::pattern::Pattern;
 
     #[test]
     fn test_neighbours() {
@@ -258,14 +322,39 @@ mod tests {
     #[test]
     fn test_output_highres() {
         {
-            let glider = "\
-......\
-..O...\
-...O..\
-.OOO..".lines();
+            let glider = Pattern::from_string("\
+......
+..O...
+...O..
+.OOO..");
 
-            let field = Field::from_string(glider.collect::<Vec<&str>>(), 4, 6);
+            let field = Field::from(glider);
             println!("{}", field.to_string_highres());
+        }
+    }
+
+    #[test]
+    fn test_find_pattern() {
+        {
+            let glider = Pattern::from_string("\
+.O.
+..O
+OOO");
+
+            let scene = Pattern::from_string("\
+OO..OOO..
+O........
+OOOOO....
+.......OO
+......O..
+.......O.
+.....OOO.
+.........
+");
+
+            let mut field = Field::from(scene);
+            field.mark_pattern(&glider);
+            println!("{}", field.to_string());
         }
     }
 }
