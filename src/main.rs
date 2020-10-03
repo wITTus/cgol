@@ -28,7 +28,7 @@ fn main() {
     loop {
         print(&mut stdout, field.to_string().as_str());
         thread::sleep(time::Duration::from_millis(interval));
-        field.apply_rules();
+        field.next_iteration();
     }
 }
 

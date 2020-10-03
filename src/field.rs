@@ -2,6 +2,7 @@ use rand::Rng;
 
 pub struct Field {
     cells: Vec<bool>,
+    cells_age: Vec<u32>,
     rows: usize,
     columns: usize,
     iterations: usize,
@@ -11,18 +12,14 @@ impl Field {
     pub fn from_random(rows: usize, columns: usize) -> Field {
         let mut rng = rand::thread_rng();
         let cells = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
+        let cells_age = vec![0; rows * columns];
 
-        Field {
-            cells,
-            rows,
-            columns,
-            iterations: 0,
-        }
+        Field { cells, cells_age, rows, columns, iterations: 0 }
     }
 
     pub fn from_string(lines: Vec<&str>, rows: usize, columns: usize) -> Field {
-        let mut cells = Vec::with_capacity(rows * columns);
-        cells.resize(rows * columns, false);
+        let mut cells = vec![false; rows * columns];
+        let cells_age = vec![0; rows * columns];
 
         for (y, &line) in lines.iter().enumerate() {
             for (x, alive) in line.chars().enumerate() {
@@ -30,44 +27,56 @@ impl Field {
             }
         }
 
-        Field {
-            cells,
-            rows,
-            columns,
-            iterations: 0,
-        }
+        Field { cells, cells_age, rows, columns, iterations: 0 }
     }
 
-    pub fn apply_rules(&mut self) {
+    pub fn next_iteration(&mut self) {
         let view = self.cells.as_slice().chunks(self.columns).collect::<Vec<&[bool]>>();
-        let cells = self.cells.iter().enumerate()
-            .map(|(i, alive)| match neighbours(&view, i % self.columns, i / self.columns) {
-                2 => true & alive,
-                3 => true,
-                _ => false
-            }).collect();
 
-        self.cells = cells;
+        let neighbour_field = self.generate_neighbour_field(&view);
+        let new_cells = self.apply_rules(neighbour_field);
+        let new_cells_age = self.age(&new_cells);
+
+        self.cells = new_cells;
+        self.cells_age = new_cells_age;
         self.iterations += 1;
+    }
+
+    pub fn generate_neighbour_field(&self, view: &Vec<&[bool]>) -> Vec<usize> {
+        self.cells.iter().enumerate().map(|(i, _)| neighbours(&view, i % self.columns, i / self.columns)).collect()
+    }
+
+    pub fn apply_rules(&self, neighbour_field: Vec<usize>) -> Vec<bool> {
+        self.cells.iter().zip(neighbour_field).map(|(alive, neighbours)| match neighbours {
+            2 => true & alive,
+            3 => true,
+            _ => false
+        }).collect()
+    }
+
+    pub fn age(&self, new_cells: &Vec<bool>) -> Vec<u32> {
+        self.cells.iter().zip(new_cells).enumerate().map(|(idx, state)| match state {
+            (true, true) => self.cells_age[idx] + 1,
+            (_, _) => 0,
+        }).collect()
     }
 
     pub fn to_string(&self) -> String {
         let mut output = String::new();
-        output += "\x1B[2J\x1B[2J\x1B[1;1H";
-        output += "\u{25AC}".repeat(self.columns as usize).as_str();
+        output += gfx_cls();
+        output += gfx_hline(self.columns).as_str();
         output += "\n";
         for r in 0..self.rows {
             for c in 0..self.columns {
-                let b = self.cells[(r * self.columns + c) as usize];
-                let c = match b {
-                    true => "\u{2588}",
-                    false => " "
-                };
-                output += c;
+                let idx = r * self.columns + c;
+                let alive = self.cells[idx];
+                let age = self.cells_age[idx];
+                let gfx = gfx_cell(alive, age);
+                output += gfx.as_str();
             }
             output += "\n";
         }
-        output += "\u{25AC}".repeat(self.columns as usize).as_str();
+        output += gfx_hline(self.columns).as_str();
         output += "\n";
         output += self.iterations.to_string().as_str();
         output
@@ -92,6 +101,29 @@ fn neighbours(rows: &Vec<&[bool]>, x: usize, y: usize) -> usize {
         .map(|(x, y)| rows[*y][*x])
         .filter(|i| { matches!(i, true) })
         .count()
+}
+
+const fn gfx_cls() -> &'static str {
+    "\x1B[2J\x1B[2J\x1B[1;1H"
+}
+
+fn gfx_cell(alive: bool, age: u32) -> String {
+    match alive {
+        true => match age {
+            0 => String::from("\x1B[38;5;34m\u{2588}"),
+            1 => String::from("\x1B[38;5;35m\u{2588}"),
+            2 => String::from("\x1B[38;5;36m\u{2588}"),
+            3 => String::from("\x1B[38;5;37m\u{2588}"),
+            4 => String::from("\x1B[38;5;38m\u{2588}"),
+            5 => String::from("\x1B[38;5;39m\u{2588}"),
+            _ => String::from("\x1B[38;5;21m\u{2588}")
+        },
+        false => String::from(" ")
+    }
+}
+
+fn gfx_hline(columns: usize) -> String {
+    "\x1B[38;5;15m".to_string() + "\u{25AC}".repeat(columns).as_str()
 }
 
 #[cfg(test)]
