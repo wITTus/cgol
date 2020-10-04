@@ -3,11 +3,13 @@ use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
-use crate::field::{Field, gfx_cls};
+use crate::field::{Field};
 use crate::pattern::Pattern;
+use crate::gfx::*;
 
 mod field;
 mod pattern;
+mod gfx;
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")

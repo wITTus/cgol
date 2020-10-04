@@ -1,6 +1,7 @@
 use rand::Rng;
 
 use crate::pattern::Pattern;
+use crate::gfx::{gfx_pos1, gfx_hline, gfx_cell, colormap_gb, gfx_hline_highres, gfx_cell_highres};
 
 pub struct Field {
     cells: Vec<bool>,
@@ -124,7 +125,7 @@ impl Field {
                 let idx = r * self.columns + c;
                 let alive = self.cells[idx];
                 let age = self.ages[idx];
-                let color = if self.marked[idx] { "\x1B[38;5;1m".to_string() } else { color_by_age(age) };
+                let color = if self.marked[idx] { "\x1B[38;5;1m".to_string() } else { colormap_gb(age) };
                 let gfx = gfx_cell(alive, color);
                 output += gfx.as_str();
             }
@@ -161,7 +162,7 @@ impl Field {
                 let age_br = *self.ages.get(idxbr).unwrap_or(&0);
 
                 let age = (age_ul + age_ur + age_bl + age_br) / 4;
-                let color = if self.marked[idxul] { "\x1B[38;5;1m".to_string() } else { color_by_age(age) };
+                let color = if self.marked[idxul] { "\x1B[38;5;1m".to_string() } else { colormap_gb(age) };
                 let gfx = gfx_cell_highres(alive_ul, alive_ur, alive_bl, alive_br, color);
                 output += gfx.as_str();
             }
@@ -186,6 +187,10 @@ fn proj2d(cells: &Vec<bool>, columns: usize) -> Vec<&[bool]> {
     cells.as_slice().chunks(columns).collect::<Vec<&[bool]>>()
 }
 
+pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
+    (pos as i32 + delta).rem_euclid(lim as i32) as usize
+}
+
 fn neighbours(cells_2d: &Vec<&[bool]>, x: usize, y: usize) -> usize {
     let r = cells_2d.len();
     let c = cells_2d[0].len();
@@ -204,75 +209,6 @@ fn neighbours(cells_2d: &Vec<&[bool]>, x: usize, y: usize) -> usize {
         .map(|(x, y)| cells_2d[*y][*x])
         .filter(|i| { matches!(i, true) })
         .count()
-}
-
-pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
-    (pos as i32 + delta).rem_euclid(lim as i32) as usize
-}
-
-pub const fn gfx_cls() -> &'static str {
-    "\x1B[2J\x1B[1;1H"
-}
-
-pub const fn gfx_pos1() -> &'static str {
-    "\x1B[1;1H"
-}
-
-fn gfx_cell(alive: bool, color: String) -> String {
-    let s = "\u{2588}";
-
-    match alive {
-        true => color + s,
-        false => String::from(" ")
-    }
-}
-
-fn gfx_cell_highres(alive_ul: bool, alive_ur: bool, alive_bl: bool, alive_br: bool, color: String) -> String {
-    let ws = " ".to_string();
-
-    let symbol = match (alive_ul, alive_ur, alive_bl, alive_br) {
-        (false, false, false, false) => ws.as_str(),
-        (false, false, false, true) => "\u{2597}",
-        (false, false, true, false) => "\u{2596}",
-        (false, false, true, true) => "\u{2584}",
-        (false, true, false, false) => "\u{259D}",
-        (false, true, false, true) => "\u{2590}",
-        (false, true, true, false) => "\u{259E}",
-        (false, true, true, true) => "\u{259F}",
-        (true, false, false, false) => "\u{2598}",
-        (true, false, false, true) => "\u{259A}",
-        (true, false, true, false) => "\u{258C}",
-        (true, false, true, true) => "\u{2599}",
-        (true, true, false, false) => "\u{2580}",
-        (true, true, false, true) => "\u{259C}",
-        (true, true, true, false) => "\u{259B}",
-        (true, true, true, true) => "\u{2588}",
-    };
-
-    match symbol {
-        " " => ws,
-        s => color + &s
-    }
-}
-
-fn gfx_hline(columns: usize) -> String {
-    "\x1B[38;5;15m".to_string() + "\u{25AC}".repeat(columns).as_str()
-}
-
-fn gfx_hline_highres(columns: usize) -> String {
-    "\x1B[38;5;15m".to_string() + "\u{25AC}".repeat(columns / 2).as_str()
-}
-
-fn color_by_age(age: u32) -> String {
-    match age {
-        0 => String::from("\x1B[38;5;34m"),
-        1 => String::from("\x1B[38;5;35m"),
-        2 => String::from("\x1B[38;5;36m"),
-        3 => String::from("\x1B[38;5;37m"),
-        4 => String::from("\x1B[38;5;38m"),
-        5 => String::from("\x1B[38;5;39m"),
-        _ => String::from("\x1B[38;5;21m")
-    }
 }
 
 #[cfg(test)]
