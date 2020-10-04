@@ -13,7 +13,7 @@ mod gfx;
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")
-        .about("Run with e.g. `cgol -c $COLUMNS -r $[ LINES-3 ] -i 30 -p patterns/glider.cells'")
+        .about("Run with e.g. `cgol -c $COLUMNS -r $[ LINES-3 ] -t 30'")
         .arg(Arg::with_name("rows").short('r').about("Number of rows").takes_value(true))
         .arg(Arg::with_name("columns").short('c').about("Number of columns").takes_value(true))
         .arg(Arg::with_name("interval").short('t').about("Tick interval (in ms)").takes_value(true))
