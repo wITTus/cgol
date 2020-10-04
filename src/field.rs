@@ -95,7 +95,7 @@ impl Field {
         }
     }
 
-    pub fn calculate_neighbours(&self, cells_2d: &Vec<&[bool]>) -> Vec<usize> {
+    pub fn calculate_neighbours(&self, cells_2d: &[&[bool]]) -> Vec<usize> {
         self.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.columns, i / self.columns)).collect()
     }
 
@@ -107,7 +107,7 @@ impl Field {
         }).collect()
     }
 
-    pub fn calculate_ages(&self, new_cells: &Vec<bool>) -> Vec<u32> {
+    pub fn calculate_ages(&self, new_cells: &[bool]) -> Vec<u32> {
         self.cells.iter().zip(new_cells).enumerate().map(|(idx, state)| match state {
             (true, true) => self.ages[idx] + 1,
             (_, _) => 0,
@@ -183,15 +183,15 @@ impl From<Pattern> for Field {
     }
 }
 
-fn proj2d(cells: &Vec<bool>, columns: usize) -> Vec<&[bool]> {
-    cells.as_slice().chunks(columns).collect::<Vec<&[bool]>>()
+fn proj2d(cells: &[bool], columns: usize) -> Vec<&[bool]> {
+    cells.chunks(columns).collect::<Vec<&[bool]>>()
 }
 
 pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
     (pos as i32 + delta).rem_euclid(lim as i32) as usize
 }
 
-fn neighbours(cells_2d: &Vec<&[bool]>, x: usize, y: usize) -> usize {
+fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
     let r = cells_2d.len();
     let c = cells_2d[0].len();
 

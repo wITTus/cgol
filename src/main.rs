@@ -42,7 +42,7 @@ fn main() {
     };
 
     if insert {
-        pattern.clone().map(|p| field.insert(p.clone()));
+        if let Some(p) = pattern.clone() { field.insert(p) }
     }
 
     print(&mut stdout, gfx_cls());
@@ -58,7 +58,7 @@ fn main() {
         field.next_iteration();
 
         if mark {
-            pattern.as_ref().map(|p| field.mark_pattern(p));
+            if let Some(p) = pattern.as_ref() { field.mark_pattern(p) }
         }
     }
 }

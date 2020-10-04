@@ -51,7 +51,7 @@ pub fn gfx_cell_highres(ul: bool, ur: bool, bl: bool, br: bool, color: String) -
 
     match symbol {
         " " => ws,
-        s => color + &s
+        s => color + s
     }
 }
 

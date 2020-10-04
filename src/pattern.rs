@@ -15,8 +15,7 @@ impl Pattern {
 
     pub fn from_string(pattern: &str) -> Pattern {
         let lines: Vec<&str> = pattern.lines()
-            .into_iter()
-            .filter(|&l| !l.starts_with("!"))
+            .filter(|&l| !l.starts_with('!'))
             .map(|l| l.trim_end())
             .collect();
 
