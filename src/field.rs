@@ -64,12 +64,12 @@ impl Field {
         for r in 0..self.rows {
             for c in 0..self.columns {
                 let mut matching_cells = 0;
-                for rr in 0..pattern.rows {
+                'p: for rr in 0..pattern.rows {
                     for cc in 0..pattern.columns {
                         let rrr = wrap(r, rr as i32, self.rows);
                         let ccc = wrap(c, cc as i32, self.columns);
                         if cells_2d[rrr][ccc] != pattern_2d[rr][cc] {
-                            break;
+                            break 'p;
                         } else {
                             matching_cells += 1;
                         }
@@ -282,7 +282,7 @@ OO..OOO..
 O........
 OOOOO....
 .......OO
-......O..
+..OO..O..
 .......O.
 .....OOO.
 .........
