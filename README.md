@@ -8,6 +8,8 @@ cargo build --release
 
 ### Run
 
+![Image](img/normal.png)
+
 ```
 cd target/release
 ./cgol
@@ -21,11 +23,15 @@ cd target/release
 
 ### High Resolution Mode
 
+![Image](img/highres.png "2474x450 cells")
+
 ```
 ./cgol -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -t 30 -x
 ```
 
 ### Load Patterns
+
+![Image](img/pattern.png)
 
 ```
 ./cgol --mode empty -c $[ 2*COLUMNS ] -r $[ 2*LINES - 6 ] -t 10 -x -p ../../patterns/glidergun.cells -i
