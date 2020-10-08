@@ -22,10 +22,9 @@ config          = { x_expr ~ comma_sep ~ y_expr ~ comma_sep ~ rule_expr}
 tag_alive      = _{ "o" }
 tag_dead       = _{ "b" }
 tag_end        = _{ "$" }
-tag            = { tag_alive | tag_dead }
+tag            = { tag_alive | tag_dead | tag_end }
 seq            = { number? ~ tag ~ WHITE_SPACE* }
-row            = { seq+ ~ tag_end? }
-pattern        = { row+ }
+pattern        = { seq+ }
 
 end_of_pattern = _{ "!" }
 doc            = _{

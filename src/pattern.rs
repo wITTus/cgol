@@ -22,15 +22,15 @@ impl Pattern {
         let raw = fs::read_to_string(filepath)?;
 
         let pattern = match Path::new(filepath).extension().and_then(OsStr::to_str).unwrap() {
-            "cells" => Pattern::from_string(raw.as_str()),
+            "cells" => Pattern::from_cells(raw.as_str()),
             "rle" => Pattern::from_rle(raw.as_str()),
-            x => panic!(".{} file support not implemented", x)
+            unknown => panic!(".{} file support not implemented", unknown)
         };
 
         Ok(pattern)
     }
 
-    pub fn from_string(pattern: &str) -> Pattern {
+    pub fn from_cells(pattern: &str) -> Pattern {
         let lines: Vec<&str> = pattern.lines()
             .filter(|&l| !l.starts_with('!'))
             .map(|l| l.trim_end())
@@ -72,50 +72,64 @@ impl Pattern {
         }
 
         let mut cells = vec![false; rows * columns];
-
         for pair in pairs {
             match pair.as_rule() {
                 Rule::pattern => {
-                    for (r, p) in pair.into_inner().enumerate() {
-                        match p.as_rule() {
-                            Rule::row => {
-                                let mut row = Vec::<bool>::new();
-                                for pp in p.into_inner() {
-                                    match pp.as_rule() {
-                                        Rule::seq => {
-                                            let mut it = pp.into_inner();
-                                            let first = it.next().unwrap();
-                                            let second = it.next();
+                    let mut r = 0usize;
+                    let mut c = 0usize;
 
-                                            let mut s = match first.as_rule() {
-                                                Rule::number => {
-                                                    let n = first.as_str().parse::<usize>().unwrap();
-                                                    let t = second.unwrap().as_str();
-                                                    t.repeat(n).chars().map(|c| c == 'o').collect::<Vec<bool>>()
-                                                }
-                                                Rule::tag => {
-                                                    vec!(first.as_str() == "o")
-                                                }
-                                                _ => unreachable!()
-                                            };
-                                            row.append(&mut s);
-                                        }
-                                        _ => {}
+                    for p in pair.into_inner() {
+                        match p.as_rule() {
+                            Rule::seq => {
+                                let mut it = p.into_inner();
+                                let first = it.next().unwrap();
+                                let second = it.next();
+                                let (n, tag) = match first.as_rule() {
+                                    Rule::number => {
+                                        let n = first.as_str().parse::<usize>().unwrap();
+                                        let t = second.unwrap().as_str();
+                                        (n, t)
                                     }
-                                }
-                                for (c, b) in row.iter().enumerate() {
-                                    cells[c + r * columns] = *b;
-                                }
+                                    Rule::tag => {
+                                        let n = 1;
+                                        let t = first.as_str();
+                                        (n, t)
+                                    }
+                                    _ => unreachable!()
+                                };
+
+                                tag.repeat(n).chars().for_each(|t| match t {
+                                    '$' => {
+                                        r += 1;
+                                        c = 0;
+                                    }
+                                    any => {
+                                        let pos = c + r * columns;
+                                        cells[pos] = any == 'o';
+                                        c += 1;
+                                    }
+                                });
                             }
                             _ => {}
-                        }
+                        };
                     }
-                    println!("{:?}", pattern);
                 }
                 _ => {}
             }
         }
-
         Pattern { cells, rows, columns }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::field::Field;
+    use crate::pattern::Pattern;
+
+    #[test]
+    fn test_rle() {
+        let s = include_str!("../patterns/blinkerpuffer2.rle");
+        let p = Pattern::from_rle(s);
+        println!("{}", Field::from(p).to_string());
     }
 }

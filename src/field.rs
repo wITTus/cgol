@@ -2,6 +2,7 @@ use rand::Rng;
 
 use crate::pattern::Pattern;
 use crate::gfx::{gfx_pos1, gfx_hline, gfx_cell, colormap_gb, gfx_hline_highres, gfx_cell_highres};
+use std::cmp::min;
 
 pub struct Field {
     cells: Vec<bool>,
@@ -36,8 +37,8 @@ impl Field {
     pub fn insert(&mut self, pattern: Pattern) {
         let pattern_2d = proj2d(&pattern.cells, pattern.columns);
 
-        for r in 0..pattern.rows {
-            for c in 0..pattern.columns {
+        for r in 0..min(pattern.rows, self.rows) {
+            for c in 0..min(pattern.columns, self.columns) {
                 self.cells[r * self.columns + c] = pattern_2d[r][c];
             }
         }
@@ -120,7 +121,9 @@ impl Field {
         output += gfx_pos1();
         output += hline.as_str();
         output += "\n";
+        //output += "\x1B[38;5;1m  012345678901234567890\n";
         for r in 0..self.rows {
+            //output += format!("{:0w$}", r.to_string(), w=2).as_str();
             for c in 0..self.columns {
                 let idx = r * self.columns + c;
                 let alive = self.cells[idx];
@@ -258,7 +261,7 @@ mod tests {
     #[test]
     fn test_output_highres() {
         {
-            let glider = Pattern::from_string("\
+            let glider = Pattern::from_cells("\
 ......
 ..O...
 ...O..
@@ -272,12 +275,12 @@ mod tests {
     #[test]
     fn test_find_pattern() {
         {
-            let glider = Pattern::from_string("\
+            let glider = Pattern::from_cells("\
 .O.
 ..O
 OOO");
 
-            let scene = Pattern::from_string("\
+            let scene = Pattern::from_cells("\
 OO..OOO..
 O........
 OOOOO....
