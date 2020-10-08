@@ -1,15 +1,21 @@
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
 use std::{thread, time};
 use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
-use crate::field::{Field};
-use crate::pattern::Pattern;
+
+use crate::field::Field;
 use crate::gfx::*;
+use crate::pattern::Pattern;
 
 mod field;
 mod pattern;
 mod gfx;
+
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")
@@ -27,7 +33,7 @@ fn main() {
     let rows = matches.value_of("rows").map(|v| v.parse::<usize>().unwrap()).unwrap_or(21);
     let columns = matches.value_of("columns").map(|v| v.parse::<usize>().unwrap()).unwrap_or(80);
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
-    let pattern = matches.value_of("pattern").map(|p| Pattern::from_file(p).expect("Couldn't open .cells file"));
+    let pattern = matches.value_of("pattern").map(|p| Pattern::from_file(p).expect("Couldn't open file"));
     let highres = matches.is_present("highres");
     let mark = matches.is_present("mark");
     let insert = matches.is_present("insert");

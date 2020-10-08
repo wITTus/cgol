@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 rand = "*"
 clap = "=3.0.0-beta.1"
+pest = "*"
+pest_derive = "*"

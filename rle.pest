@@ -1,0 +1,40 @@
+number         = { DECIMAL_NUMBER+ }
+space          = _{ SPACE_SEPARATOR }
+
+meta_char      = _{ "#" }
+meta_cat       = { LETTER }
+meta_content   = { (!NEWLINE ~ ANY)+ }
+meta_line      = { meta_char ~ meta_cat ~ space? ~ meta_content }
+
+eq             = _{ "=" }
+eq_sep         = _{ space? ~ eq ~ space? }
+comma          = _{ "," }
+comma_sep      = _{ space? ~ comma ~ space? }
+
+slash          = _{ "/" }
+
+rule           = { ("B"|"b") ~ number ~ slash ~ ("S"|"s") ~ number }
+x_expr         = { "x" ~ eq_sep ~ number }
+y_expr         = { "y" ~ eq_sep ~ number }
+rule_expr      = { "rule" ~ eq_sep ~ rule }
+config          = { x_expr ~ comma_sep ~ y_expr ~ comma_sep ~ rule_expr}
+
+tag_alive      = _{ "o" }
+tag_dead       = _{ "b" }
+tag_end        = _{ "$" }
+tag            = { tag_alive | tag_dead }
+seq            = { number? ~ tag ~ WHITE_SPACE* }
+row            = { seq+ ~ tag_end? }
+pattern        = { row+ }
+
+end_of_pattern = _{ "!" }
+doc            = _{
+    SOI
+    ~ (meta_line ~ NEWLINE)*
+    ~ (config ~ NEWLINE)?
+    ~ NEWLINE*
+    ~ pattern
+    ~ end_of_pattern?
+    ~ NEWLINE*
+    ~ EOI
+}
