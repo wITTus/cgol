@@ -1,3 +1,5 @@
+use std::process::Command;
+
 pub fn colormap_gb(n: u32) -> String {
     match n {
         0 => String::from("\x1B[38;5;34m"),
@@ -61,4 +63,10 @@ pub fn gfx_hline(columns: usize) -> String {
 
 pub fn gfx_hline_highres(columns: usize) -> String {
     "\x1B[38;5;15m".to_string() + "\u{25AC}".repeat(columns / 2).as_str()
+}
+
+pub(crate) fn call(cmd: &str, arg: &str) -> Option<String> {
+    let output = Command::new(cmd).arg(arg).output().ok()?;
+    let string = String::from_utf8_lossy(&output.stdout).trim_end().to_string();
+    Some(string)
 }

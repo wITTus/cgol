@@ -1,7 +1,7 @@
 use rand::Rng;
 
 use crate::pattern::Pattern;
-use crate::gfx::{gfx_pos1, gfx_hline, gfx_cell, colormap_gb, gfx_hline_highres, gfx_cell_highres};
+use crate::term::{gfx_pos1, gfx_hline, gfx_cell, colormap_gb, gfx_hline_highres, gfx_cell_highres};
 use std::cmp::min;
 
 pub struct Field {

@@ -7,15 +7,17 @@ use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
-
 use crate::field::Field;
-use crate::gfx::*;
 use crate::pattern::Pattern;
+use crate::term::*;
 
 mod field;
 mod pattern;
-mod gfx;
+mod term;
 
+const TERM_DEFAULT_ROWS: usize = 21;
+// 24 - 1 (Iterations) - 2 (Horizontal Line)
+const TERM_DEFAULT_COLUMNS: usize = 80;
 
 fn main() {
     let matches = App::new("Conway's Game of Life").author("w177us")
@@ -30,11 +32,22 @@ fn main() {
         .arg(Arg::with_name("mode").long("mode").possible_values(&["random", "empty"]))
         .get_matches();
 
-    let rows = matches.value_of("rows").map(|v| v.parse::<usize>().unwrap()).unwrap_or(21);
-    let columns = matches.value_of("columns").map(|v| v.parse::<usize>().unwrap()).unwrap_or(80);
+    let highres = matches.is_present("highres");
+
+    let rows = matches.value_of("rows").map(|s| s.to_string())
+        .or_else(|| call("tput", "lines"))
+        .and_then(|s| s.parse::<usize>().ok())
+        .map(|i| (i - 3) * if highres { 2 } else { 1 })
+        .unwrap_or(TERM_DEFAULT_ROWS);
+
+    let columns = matches.value_of("columns").map(|s| s.to_string())
+        .or_else(|| call("tput", "cols"))
+        .and_then(|s| s.parse::<usize>().ok())
+        .map(|i| i * (if highres { 2 } else { 1 }))
+        .unwrap_or(TERM_DEFAULT_COLUMNS);
+
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
     let pattern = matches.value_of("pattern").map(|p| Pattern::from_file(p).expect("Couldn't open file"));
-    let highres = matches.is_present("highres");
     let mark = matches.is_present("mark");
     let insert = matches.is_present("insert");
     let mode = matches.value_of("mode");
