@@ -54,30 +54,30 @@ fn main() {
 
     let mut stdout = stdout();
 
-    let mut field = match mode {
+    let mut game = match mode {
         Some("random") => Game::from_random(rows, columns),
         Some("empty") => Game::with_size(rows, columns),
         _ => Game::from_random(rows, columns),
     };
 
     if insert {
-        if let Some(p) = pattern.clone() { field.insert(p) }
+        if let Some(p) = pattern.clone() { game.field.insert(p) }
     }
 
     print(&mut stdout, gfx_cls());
 
     loop {
         let gfx = match highres {
-            true => field.to_string_highres(),
-            false => field.to_string()
+            true => game.to_string_highres(),
+            false => game.to_string()
         };
 
         print(&mut stdout, gfx.as_str());
         thread::sleep(time::Duration::from_millis(interval));
-        field.next_iteration();
+        game.next_iteration();
 
         if mark {
-            if let Some(p) = pattern.as_ref() { field.mark_pattern(p) }
+            if let Some(p) = pattern.as_ref() { game.mark_pattern(p) }
         }
     }
 }

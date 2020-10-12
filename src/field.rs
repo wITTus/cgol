@@ -1,8 +1,10 @@
 use std::{fs, io};
+use std::cmp::min;
 use std::ffi::OsStr;
 use std::path::Path;
 
 use pest::Parser;
+use rand::Rng;
 
 #[derive(Parser)]
 #[grammar = "../rle.pest"]
@@ -16,8 +18,42 @@ pub struct Field<T> {
     pub columns: usize,
 }
 
+impl<T: Copy> Field<T> {
+    pub fn new(cells: Vec<T>, rows: usize, columns: usize) -> Field<T> {
+        Field { cells, rows, columns }
+    }
+
+    pub fn with_size(rows: usize, columns: usize) -> Field<T>
+        where T: Default
+    {
+        let cells = vec![T::default(); rows * columns];
+        Field::new(cells, rows, columns)
+    }
+
+    pub fn insert(&mut self, pattern: Field<T>) {
+        let pattern_2d = pattern.proj2d();
+
+        for r in 0..min(pattern.rows, self.rows) {
+            for c in 0..min(pattern.columns, self.columns) {
+                self.cells[r * self.columns + c] = pattern_2d[r][c];
+            }
+        }
+    }
+
+    pub fn proj2d(&self) -> Vec<&[T]> {
+        self.cells.chunks(self.columns).collect::<Vec<&[T]>>()
+
+    }
+}
 
 impl Field<bool> {
+    pub fn from_random(rows: usize, columns: usize) -> Field<bool> {
+        let mut rng = rand::thread_rng();
+        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
+
+        Field::new(cells, rows, columns)
+    }
+
     pub fn from_file(filepath: &str) -> io::Result<Field<bool>> {
         let raw = fs::read_to_string(filepath)?;
 
@@ -122,8 +158,8 @@ impl Field<bool> {
 
 #[cfg(test)]
 mod tests {
-    use crate::game::Game;
     use crate::field::Field;
+    use crate::game::Game;
 
     #[test]
     fn test_rle() {
