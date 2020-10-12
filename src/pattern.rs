@@ -75,9 +75,6 @@ impl Pattern {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::pattern => {
-                    let mut r = 0usize;
-                    let mut c = 0usize;
-
                     for p in pair.into_inner() {
                         match p.as_rule() {
                             Rule::seq => {
@@ -98,6 +95,8 @@ impl Pattern {
                                     _ => unreachable!()
                                 };
 
+                                let mut r = 0usize;
+                                let mut c = 0usize;
                                 tag.repeat(n).chars().for_each(|t| match t {
                                     '$' => {
                                         r += 1;
