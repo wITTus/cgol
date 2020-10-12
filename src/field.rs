@@ -141,6 +141,9 @@ impl Field<bool> {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::pattern => {
+                    let mut r = 0usize;
+                    let mut c = 0usize;
+
                     for p in pair.into_inner() {
                         match p.as_rule() {
                             Rule::seq => {
@@ -161,8 +164,6 @@ impl Field<bool> {
                                     _ => unreachable!()
                                 };
 
-                                let mut r = 0usize;
-                                let mut c = 0usize;
                                 tag.repeat(n).chars().for_each(|t| match t {
                                     '$' => {
                                         r += 1;
@@ -223,7 +224,9 @@ mod tests {
     fn test_rle() {
         let s = include_str!("../patterns/blinkerpuffer2.rle");
         let p = Field::from_rle(s);
-        println!("{}", Game::from(p).to_string());
+        let ss = format!("{}", Game::from(p).to_string());
+
+        assert_eq!("\u{1b}[1;1H\u{1b}[38;5;15m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n             \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█ \n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n           \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█   \n                 \n                 \n         \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n  \u{1b}[38;5;34m█     \u{1b}[38;5;34m█  \u{1b}[38;5;34m█     \n \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█       \u{1b}[38;5;34m█       \n  \u{1b}[38;5;34m█\u{1b}[38;5;34m█  \u{1b}[38;5;34m█  \u{1b}[38;5;34m█       \n          \u{1b}[38;5;34m█      \n  \u{1b}[38;5;34m█\u{1b}[38;5;34m█  \u{1b}[38;5;34m█  \u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█       \u{1b}[38;5;34m█       \n\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n  \u{1b}[38;5;34m█     \u{1b}[38;5;34m█  \u{1b}[38;5;34m█     \n         \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n                 \n                 \n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█   \n           \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n             \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█ \n\u{1b}[38;5;15m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n0", ss);
     }
 
     #[test]
