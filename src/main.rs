@@ -7,12 +7,12 @@ use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
+use crate::game::Game;
 use crate::field::Field;
-use crate::pattern::Pattern;
 use crate::term::*;
 
+mod game;
 mod field;
-mod pattern;
 mod term;
 
 const TERM_DEFAULT_ROWS: usize = 21;
@@ -47,7 +47,7 @@ fn main() {
         .unwrap_or(TERM_DEFAULT_COLUMNS);
 
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
-    let pattern = matches.value_of("pattern").map(|p| Pattern::from_file(p).expect("Couldn't open file"));
+    let pattern = matches.value_of("pattern").map(|p| Field::from_file(p).expect("Couldn't open file"));
     let mark = matches.is_present("mark");
     let insert = matches.is_present("insert");
     let mode = matches.value_of("mode");
@@ -55,9 +55,9 @@ fn main() {
     let mut stdout = stdout();
 
     let mut field = match mode {
-        Some("random") => Field::from_random(rows, columns),
-        Some("empty") => Field::with_size(rows, columns),
-        _ => Field::from_random(rows, columns),
+        Some("random") => Game::from_random(rows, columns),
+        Some("empty") => Game::with_size(rows, columns),
+        _ => Game::from_random(rows, columns),
     };
 
     if insert {
