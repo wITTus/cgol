@@ -54,15 +54,17 @@ fn main() {
 
     let mut stdout = stdout();
 
-    let mut game = match mode {
-        Some("random") => Game::from_random(rows, columns),
-        Some("empty") => Game::with_size(rows, columns),
-        _ => Game::from_random(rows, columns),
+    let mut field = match mode {
+        Some("empty") => Field::with_size(rows, columns),
+        Some("random") => Field::from_random(rows, columns),
+        _ => Field::from_random(rows, columns)
     };
 
     if insert {
-        if let Some(p) = pattern.clone() { game.field.insert(p) }
+        if let Some(p) = pattern.clone() { field.insert(p) }
     }
+
+    let mut game = Game::new(field);
 
     print(&mut stdout, gfx_cls());
 

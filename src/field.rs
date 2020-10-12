@@ -18,19 +18,21 @@ pub struct Field<T> {
     pub columns: usize,
 }
 
-impl<T: Copy> Field<T> {
+impl<T> Field<T> {
     pub fn new(cells: Vec<T>, rows: usize, columns: usize) -> Field<T> {
         Field { cells, rows, columns }
     }
 
     pub fn with_size(rows: usize, columns: usize) -> Field<T>
-        where T: Default
+        where T: Default + Copy
     {
         let cells = vec![T::default(); rows * columns];
         Field::new(cells, rows, columns)
     }
 
-    pub fn insert(&mut self, pattern: Field<T>) {
+    pub fn insert(&mut self, pattern: Field<T>)
+        where T: Copy
+    {
         let pattern_2d = pattern.proj2d();
 
         for r in 0..min(pattern.rows, self.rows) {
@@ -42,6 +44,35 @@ impl<T: Copy> Field<T> {
 
     pub fn proj2d(&self) -> Vec<&[T]> {
         self.cells.chunks(self.columns).collect::<Vec<&[T]>>()
+    }
+
+    pub fn find_pattern(&self, pattern: &Field<T>) -> Vec<(usize, usize)>
+        where T: Eq
+    {
+        let cells_2d = self.proj2d();
+        let pattern_2d = pattern.proj2d();
+
+        let mut matches: Vec<(usize, usize)> = Vec::new();
+        for r in 0..self.rows {
+            for c in 0..self.columns {
+                let mut matching_cells = 0;
+                'p: for rr in 0..pattern.rows {
+                    for cc in 0..pattern.columns {
+                        let rrr = wrap(r, rr as i32, self.rows);
+                        let ccc = wrap(c, cc as i32, self.columns);
+                        if cells_2d[rrr][ccc] != pattern_2d[rr][cc] {
+                            break 'p;
+                        } else {
+                            matching_cells += 1;
+                        }
+                    }
+                }
+                if matching_cells == pattern.rows * pattern.columns {
+                    matches.push((r, c));
+                }
+            }
+        }
+        matches
     }
 }
 
@@ -56,13 +87,13 @@ impl Field<bool> {
     pub fn from_file(filepath: &str) -> io::Result<Field<bool>> {
         let raw = fs::read_to_string(filepath)?;
 
-        let pattern = match Path::new(filepath).extension().and_then(OsStr::to_str).unwrap() {
+        let field = match Path::new(filepath).extension().and_then(OsStr::to_str).unwrap() {
             "cells" => Field::from_cells(raw.as_str()),
             "rle" => Field::from_rle(raw.as_str()),
             unknown => panic!(".{} file support not implemented", unknown)
         };
 
-        Ok(pattern)
+        Ok(field)
     }
 
     pub fn from_cells(pattern: &str) -> Field<bool> {

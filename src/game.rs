@@ -2,7 +2,7 @@ use crate::field::{Field, wrap};
 use crate::term::{colormap_gb, gfx_cell, gfx_cell_highres, gfx_hline, gfx_hline_highres, gfx_pos1};
 
 pub struct Game {
-    pub(crate) field: Field<bool>,
+    field: Field<bool>,
     ages: Field<u32>,
     marked: Field<bool>,
     iterations: usize,
@@ -14,16 +14,6 @@ impl Game {
         let marked = Field::with_size(field.rows, field.columns);
         let iterations = 0;
         Game { field, ages, marked, iterations }
-    }
-
-    pub fn with_size(rows: usize, columns: usize) -> Game {
-        let field = Field::with_size(rows, columns);
-        Game::new(field)
-    }
-
-    pub fn from_random(rows: usize, columns: usize) -> Game {
-        let field = Field::from_random(rows, columns);
-        Game::new(field)
     }
 
     pub fn next_iteration(&mut self) {
@@ -39,29 +29,7 @@ impl Game {
     }
 
     pub fn mark_pattern(&mut self, pattern: &Field<bool>) {
-        let cells_2d = self.field.proj2d();
-        let pattern_2d = pattern.proj2d();
-
-        let mut matches: Vec<(usize, usize)> = Vec::new();
-        for r in 0..self.field.rows {
-            for c in 0..self.field.columns {
-                let mut matching_cells = 0;
-                'p: for rr in 0..pattern.rows {
-                    for cc in 0..pattern.columns {
-                        let rrr = wrap(r, rr as i32, self.field.rows);
-                        let ccc = wrap(c, cc as i32, self.field.columns);
-                        if cells_2d[rrr][ccc] != pattern_2d[rr][cc] {
-                            break 'p;
-                        } else {
-                            matching_cells += 1;
-                        }
-                    }
-                }
-                if matching_cells == pattern.rows * pattern.columns {
-                    matches.push((r, c));
-                }
-            }
-        }
+        let matches = self.field.find_pattern(pattern);
 
         for (r, c) in matches {
             for rr in 0..pattern.rows {
@@ -70,10 +38,8 @@ impl Game {
                     let ccc = wrap(c, cc as i32, self.field.columns);
                     let idx = rrr * self.field.columns + ccc;
                     self.marked.cells[idx] = self.field.cells[idx] & true;
-                    //println!("Marking {} {} WITH {}", rrr, ccc, self.cells[idx] & true);
                 }
             }
-            //println!("Found match at {},{}", r, c);
         }
     }
 
