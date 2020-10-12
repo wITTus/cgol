@@ -42,7 +42,6 @@ impl<T: Copy> Field<T> {
 
     pub fn proj2d(&self) -> Vec<&[T]> {
         self.cells.chunks(self.columns).collect::<Vec<&[T]>>()
-
     }
 }
 
@@ -154,11 +153,39 @@ impl Field<bool> {
         }
         Field { cells, rows, columns }
     }
+
+    pub fn calculate_neighbours(&self, cells_2d: &[&[bool]]) -> Vec<usize> {
+        self.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.columns, i / self.columns)).collect()
+    }
+}
+
+pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
+    (pos as i32 + delta).rem_euclid(lim as i32) as usize
+}
+
+fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
+    let r = cells_2d.len();
+    let c = cells_2d[0].len();
+
+    let xm1 = wrap(x, -1, c);
+    let ym1 = wrap(y, -1, r);
+    let xp1 = wrap(x, 1, c);
+    let yp1 = wrap(y, 1, r);
+
+    [
+        (xm1, ym1), (x, ym1), (xp1, ym1),
+        (xm1, y), /*       */ (xp1, y),
+        (xm1, yp1), (x, yp1), (xp1, yp1)
+    ]
+        .iter()
+        .map(|(x, y)| cells_2d[*y][*x])
+        .filter(|i| { matches!(i, true) })
+        .count()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::field::Field;
+    use crate::field::{Field, neighbours};
     use crate::game::Game;
 
     #[test]
@@ -166,5 +193,44 @@ mod tests {
         let s = include_str!("../patterns/blinkerpuffer2.rle");
         let p = Field::from_rle(s);
         println!("{}", Game::from(p).to_string());
+    }
+
+    #[test]
+    fn test_neighbours() {
+        {
+            let r: Vec<&[bool]> = vec!(&[true, true, true], &[false, false, false], &[true, true, true]);
+            let n = neighbours(&r, 1, 1);
+            assert_eq!(6, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[true, false, true], &[false, true, false], &[true, false, true]);
+            let n = neighbours(&r, 1, 1);
+            assert_eq!(4, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[false, false, false], &[false, true, false], &[false, false, false]);
+            let n = neighbours(&r, 1, 1);
+            assert_eq!(0, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[true, false, false], &[true, false, false], &[true, false, false]);
+            let n = neighbours(&r, 1, 1);
+            assert_eq!(3, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[true, true, true], &[true, false, true], &[false, true, false]);
+            let n = neighbours(&r, 0, 0);
+            assert_eq!(5, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[true, true, false], &[true, false, false], &[false, false, false]);
+            let n = neighbours(&r, 2, 2);
+            assert_eq!(3, n);
+        }
+        {
+            let r: Vec<&[bool]> = vec!(&[true, true, false], &[false, false, false], &[false, false, false], &[true, true, true]);
+            let n = neighbours(&r, 0, 0);
+            assert_eq!(4, n);
+        }
     }
 }

@@ -1,4 +1,4 @@
-use crate::field::Field;
+use crate::field::{Field, wrap};
 use crate::term::{colormap_gb, gfx_cell, gfx_cell_highres, gfx_hline, gfx_hline_highres, gfx_pos1};
 
 pub struct Game {
@@ -28,8 +28,7 @@ impl Game {
 
     pub fn next_iteration(&mut self) {
         let cells_2d = self.field.proj2d();
-
-        let neighbours = self.calculate_neighbours(&cells_2d);
+        let neighbours = self.field.calculate_neighbours(&cells_2d);
         let new_cells = self.apply_rules(neighbours);
         let ages = self.calculate_ages(&new_cells);
 
@@ -76,10 +75,6 @@ impl Game {
             }
             //println!("Found match at {},{}", r, c);
         }
-    }
-
-    pub fn calculate_neighbours(&self, cells_2d: &[&[bool]]) -> Vec<usize> {
-        self.field.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.field.columns, i / self.field.columns)).collect()
     }
 
     pub fn apply_rules(&self, neighbour_field: Vec<usize>) -> Vec<bool> {
@@ -166,73 +161,11 @@ impl From<Field<bool>> for Game {
     }
 }
 
-pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
-    (pos as i32 + delta).rem_euclid(lim as i32) as usize
-}
-
-fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
-    let r = cells_2d.len();
-    let c = cells_2d[0].len();
-
-    let xm1 = wrap(x, -1, c);
-    let ym1 = wrap(y, -1, r);
-    let xp1 = wrap(x, 1, c);
-    let yp1 = wrap(y, 1, r);
-
-    [
-        (xm1, ym1), (x, ym1), (xp1, ym1),
-        (xm1, y), /*       */ (xp1, y),
-        (xm1, yp1), (x, yp1), (xp1, yp1)
-    ]
-        .iter()
-        .map(|(x, y)| cells_2d[*y][*x])
-        .filter(|i| { matches!(i, true) })
-        .count()
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::field::Field;
-    use crate::game::{Game, neighbours};
+    use crate::field::{Field};
+    use crate::game::{Game};
 
-    #[test]
-    fn test_neighbours() {
-        {
-            let r: Vec<&[bool]> = vec!(&[true, true, true], &[false, false, false], &[true, true, true]);
-            let n = neighbours(&r, 1, 1);
-            assert_eq!(6, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[true, false, true], &[false, true, false], &[true, false, true]);
-            let n = neighbours(&r, 1, 1);
-            assert_eq!(4, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[false, false, false], &[false, true, false], &[false, false, false]);
-            let n = neighbours(&r, 1, 1);
-            assert_eq!(0, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[true, false, false], &[true, false, false], &[true, false, false]);
-            let n = neighbours(&r, 1, 1);
-            assert_eq!(3, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[true, true, true], &[true, false, true], &[false, true, false]);
-            let n = neighbours(&r, 0, 0);
-            assert_eq!(5, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[true, true, false], &[true, false, false], &[false, false, false]);
-            let n = neighbours(&r, 2, 2);
-            assert_eq!(3, n);
-        }
-        {
-            let r: Vec<&[bool]> = vec!(&[true, true, false], &[false, false, false], &[false, false, false], &[true, true, true]);
-            let n = neighbours(&r, 0, 0);
-            assert_eq!(4, n);
-        }
-    }
 
     #[test]
     fn test_output_highres() {
@@ -243,8 +176,8 @@ mod tests {
 ...O..
 .OOO..");
 
-            let field = Game::from(glider);
-            println!("{}", field.to_string_highres());
+            let game = Game::from(glider);
+            println!("{}", game.to_string_highres());
         }
     }
 
@@ -267,9 +200,9 @@ OOOOO....
 .........
 ");
 
-            let mut field = Game::from(scene);
-            field.mark_pattern(&glider);
-            println!("{}", field.to_string());
+            let mut game = Game::from(scene);
+            game.mark_pattern(&glider);
+            println!("{}", game.to_string());
         }
     }
 }
