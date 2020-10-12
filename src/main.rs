@@ -15,8 +15,8 @@ mod game;
 mod field;
 mod term;
 
-const TERM_DEFAULT_ROWS: usize = 21;
 // 24 - 1 (Iterations) - 2 (Horizontal Line)
+const TERM_DEFAULT_ROWS: usize = 24 - 1 - 2;
 const TERM_DEFAULT_COLUMNS: usize = 80;
 
 fn main() {
