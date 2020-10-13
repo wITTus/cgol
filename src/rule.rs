@@ -9,7 +9,7 @@ impl AutomataRule {
     }
 
     pub fn apply(&self, alive: bool, neighbours: usize) -> bool {
-        (self.s[neighbours] & alive) | self.b[neighbours]
+        (alive & self.s[neighbours]) | (!alive & self.b[neighbours])
     }
 }
 
