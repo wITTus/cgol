@@ -10,10 +10,12 @@ use clap::{App, Arg};
 use crate::game::Game;
 use crate::field::Field;
 use crate::term::*;
+use crate::rule::AutomataRule;
 
 mod game;
 mod field;
 mod term;
+mod rule;
 
 // 24 - 1 (Iterations) - 2 (Horizontal Line)
 const TERM_DEFAULT_ROWS: usize = 24 - 1 - 2;
@@ -30,6 +32,7 @@ fn main() {
         .arg(Arg::with_name("mark").short('m').about("Mark pattern"))
         .arg(Arg::with_name("insert").short('i').about("Insert pattern"))
         .arg(Arg::with_name("mode").long("mode").possible_values(&["random", "empty"]))
+        .arg(Arg::with_name("rule").long("rule").takes_value(true).about("Cellular automaton rule, e.g. B36/S23 for highlife."))
         .get_matches();
 
     let highres = matches.is_present("highres");
@@ -51,6 +54,7 @@ fn main() {
     let mark = matches.is_present("mark");
     let insert = matches.is_present("insert");
     let mode = matches.value_of("mode");
+    let rule = matches.value_of("rule").map(|r| AutomataRule::from(r)).unwrap_or_else(AutomataRule::cgol);
 
     let mut stdout = stdout();
 
@@ -64,7 +68,7 @@ fn main() {
         if let Some(p) = pattern.clone() { field.insert(p) }
     }
 
-    let mut game = Game::new(field);
+    let mut game = Game::new(field, rule);
 
     print(&mut stdout, gfx_cls());
 

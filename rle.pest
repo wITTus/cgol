@@ -30,7 +30,7 @@ end_of_pattern = _{ "!" }
 doc            = _{
     SOI
     ~ (meta_line ~ NEWLINE)*
-    ~ (config ~ NEWLINE)?
+    ~ (config ~ NEWLINE)
     ~ NEWLINE*
     ~ pattern
     ~ end_of_pattern?

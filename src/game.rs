@@ -1,25 +1,27 @@
 use crate::field::{Field, wrap};
+use crate::rule::AutomataRule;
 use crate::term::{colormap_gb, gfx_cell, gfx_cell_highres, gfx_hline, gfx_hline_highres, gfx_pos1};
 
 pub struct Game {
     field: Field<bool>,
     ages: Field<u32>,
     marked: Field<bool>,
+    rule: AutomataRule,
     iterations: usize,
 }
 
 impl Game {
-    pub fn new(field: Field<bool>) -> Game {
+    pub fn new(field: Field<bool>, rule: AutomataRule) -> Self {
         let ages = Field::with_size(field.rows, field.columns);
         let marked = Field::with_size(field.rows, field.columns);
         let iterations = 0;
-        Game { field, ages, marked, iterations }
+        Game { field, ages, marked, rule, iterations }
     }
 
     pub fn next_iteration(&mut self) {
         let cells_2d = self.field.proj2d();
         let neighbours = self.field.calculate_neighbours(&cells_2d);
-        let new_cells = self.apply_rules(neighbours);
+        let new_cells = self.field.apply_rule(neighbours, &self.rule);
         let ages = self.calculate_ages(&new_cells);
 
         self.marked = Field::with_size(self.field.rows, self.field.columns);
@@ -41,14 +43,6 @@ impl Game {
                 }
             }
         }
-    }
-
-    pub fn apply_rules(&self, neighbour_field: Vec<usize>) -> Vec<bool> {
-        self.field.cells.iter().zip(neighbour_field).map(|(alive, neighbours)| match neighbours {
-            2 => true & alive,
-            3 => true,
-            _ => false
-        }).collect()
     }
 
     pub fn calculate_ages(&self, new_cells: &[bool]) -> Vec<u32> {
@@ -121,17 +115,11 @@ impl Game {
     }
 }
 
-impl From<Field<bool>> for Game {
-    fn from(field: Field<bool>) -> Self {
-        Game::new(field)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::field::{Field};
-    use crate::game::{Game};
-
+    use crate::field::Field;
+    use crate::game::Game;
+    use crate::rule::AutomataRule;
 
     #[test]
     fn test_output_highres() {
@@ -142,7 +130,7 @@ mod tests {
 ...O..
 .OOO..");
 
-            let game = Game::from(glider);
+            let game = Game::new(glider, AutomataRule::cgol());
             println!("{}", game.to_string_highres());
         }
     }
@@ -166,7 +154,7 @@ OOOOO....
 .........
 ");
 
-            let mut game = Game::from(scene);
+            let mut game = Game::new(scene, AutomataRule::cgol());
             game.mark_pattern(&glider);
             println!("{}", game.to_string());
         }

@@ -5,6 +5,7 @@ use std::path::Path;
 
 use pest::Parser;
 use rand::Rng;
+use crate::rule::AutomataRule;
 
 #[derive(Parser)]
 #[grammar = "../rle.pest"]
@@ -189,6 +190,10 @@ impl Field<bool> {
     pub fn calculate_neighbours(&self, cells_2d: &[&[bool]]) -> Vec<usize> {
         self.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.columns, i / self.columns)).collect()
     }
+
+    pub fn apply_rule(&self, neighbour_field: Vec<usize>, rule: &AutomataRule) -> Vec<bool> {
+        self.cells.iter().zip(neighbour_field).map(|(&alive, neighbours)| rule.apply(alive, neighbours)).collect()
+    }
 }
 
 pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
@@ -215,16 +220,23 @@ fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
         .count()
 }
 
+impl <T: PartialEq> PartialEq for Field<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.rows == other.rows && self.columns == other.columns && self.cells == other.cells
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::field::{Field, neighbours};
     use crate::game::Game;
+    use crate::rule::AutomataRule;
 
     #[test]
     fn test_rle() {
         let s = include_str!("../patterns/blinkerpuffer2.rle");
         let p = Field::from_rle(s);
-        let ss = format!("{}", Game::from(p).to_string());
+        let ss = format!("{}", Game::new(p, AutomataRule::cgol()).to_string());
 
         assert_eq!("\u{1b}[1;1H\u{1b}[38;5;15m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n             \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█ \n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n           \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█   \n                 \n                 \n         \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n  \u{1b}[38;5;34m█     \u{1b}[38;5;34m█  \u{1b}[38;5;34m█     \n \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█       \u{1b}[38;5;34m█       \n  \u{1b}[38;5;34m█\u{1b}[38;5;34m█  \u{1b}[38;5;34m█  \u{1b}[38;5;34m█       \n          \u{1b}[38;5;34m█      \n  \u{1b}[38;5;34m█\u{1b}[38;5;34m█  \u{1b}[38;5;34m█  \u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█       \u{1b}[38;5;34m█       \n\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█       \n \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█   \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n  \u{1b}[38;5;34m█     \u{1b}[38;5;34m█  \u{1b}[38;5;34m█     \n         \u{1b}[38;5;34m█ \u{1b}[38;5;34m█     \n                 \n                 \n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█   \n           \u{1b}[38;5;34m█\u{1b}[38;5;34m█ \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n            \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█\n             \u{1b}[38;5;34m█\u{1b}[38;5;34m█\u{1b}[38;5;34m█ \n\u{1b}[38;5;15m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n0", ss);
     }
