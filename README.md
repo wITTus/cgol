@@ -55,10 +55,14 @@ Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
 
 ![Image](img/mark.png)
 
-### Try Custom Rules
+### Custom Rules
+
+Try some [well-known life-like cellular automata](https://www.conwaylife.com/wiki/Cellular_automaton#Well-known_life-like_cellular_automata)!
 
 ```
 ./cgol --rule B0/S8 -x
 ```
 
 ![Image](img/customrule.png)
+
+

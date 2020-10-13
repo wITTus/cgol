@@ -1,0 +1,4 @@
+#N Butterfly
+#C https://www.conwaylife.com/wiki/OCA:Day_%26_Night
+x = 5, y = 5, rule = B3678/S34678
+b3o$3obo$3b2o$3b2o$3bo$!
