@@ -30,7 +30,7 @@ fn main() {
         .arg(Arg::with_name("highres").short('x').about("Use high resolution"))
         .arg(Arg::with_name("mark").short('m').takes_value(true).about("Mark pattern"))
         .arg(Arg::with_name("insert").short('i').takes_value(true).about("Insert pattern"))
-        .arg(Arg::with_name("mode").long("mode").possible_values(&["empty", "random", "gaussian"]))
+        .arg(Arg::with_name("init").long("init").possible_values(&["empty", "random", "gauss"]))
         .arg(Arg::with_name("rule").long("rule").takes_value(true).about("Cellular automaton rule, e.g. B36/S23 for highlife."))
         .get_matches();
 
@@ -51,15 +51,15 @@ fn main() {
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
     let mark = matches.value_of("mark").map(|p| Field::from_file(p).expect("Couldn't open file"));
     let insert = matches.value_of("insert").map(|p| Field::from_file(p).expect("Couldn't open file"));
-    let mode = matches.value_of("mode");
+    let init = matches.value_of("init");
     let rule = matches.value_of("rule").map(AutomataRule::from).unwrap_or_else(AutomataRule::cgol);
 
     let mut stdout = stdout();
 
-    let mut field = match mode {
+    let mut field = match init {
         Some("empty") => Field::with_size(rows, columns),
         Some("random") => Field::from_random(rows, columns),
-        Some("gaussian") => Field::from_normal_distribution(rows, columns),
+        Some("gauss") => Field::from_normal_distribution(rows, columns),
         _ => Field::from_random(rows, columns)
     };
 

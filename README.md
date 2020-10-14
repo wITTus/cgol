@@ -6,7 +6,7 @@
 - Specify custom amount of columns and rows (`-c <number>`, `-r <number>`)
 - Color cells by age
 - Configurable speed in milliseconds (`-t <number>`)
-- Random / empty canvas (`--mode [random|empty]`)
+- Multiple initialization modes (`--init [random|empty|gauss]`)
 - Terminal high resolution mode (`-x`)
 - Mark patterns with red color (`-m <filepath>`)
 - Insert patterns into canvas (`-i <filepath>`)
@@ -42,7 +42,7 @@ Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
 ### Load Patterns
 
 ```
-./cgol -i ../../patterns/glidergun.rle --mode empty
+./cgol -i ../../patterns/glidergun.rle --init empty
 ```
 
 ![Image](img/pattern.png)
