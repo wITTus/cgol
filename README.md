@@ -3,16 +3,16 @@
 ### Features
 
 - Terminal graphics
-- Specify custom amount of columns and rows (`-c`, `-r`)
+- Specify custom amount of columns and rows (`-c <number>`, `-r <number>`)
 - Color cells by age
-- Configurable speed interval in milliseconds (`-t`)
-- Random / empty canvas (`--mode`)
+- Configurable speed in milliseconds (`-t <number>`)
+- Random / empty canvas (`--mode [random|empty]`)
 - Terminal high resolution mode (`-x`)
-- Mark specific patterns with red color (`-m`)
-- Insert patterns into canvas (`-i`)
-- Load .rle files (`-p`)
-- Load .cells files (`-p`)
-- Custom rules (`--rule`)
+- Mark patterns with red color (`-m <filepath>`)
+- Insert patterns into canvas (`-i <filepath>`)
+- Load .rle files
+- Load .cells files
+- Custom rules (`--rule <rule>`)
 
 ### Build 
 
@@ -42,7 +42,7 @@ Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
 ### Load Patterns
 
 ```
-./cgol --mode empty -t 10 -x -p ../../patterns/glidergun.cells -i
+./cgol -i ../../patterns/glidergun.rle --mode empty
 ```
 
 ![Image](img/pattern.png)
@@ -50,7 +50,7 @@ Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
 ### Mark Patterns in Random Output
 
 ```
-./cgol -t 50 -p ../../patterns/glider.cells -i -m
+./cgol -m ../../patterns/block.cells
 ```
 
 ![Image](img/mark.png)
@@ -60,7 +60,7 @@ Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
 Try some [well-known life-like cellular automata](https://www.conwaylife.com/wiki/Cellular_automaton#Well-known_life-like_cellular_automata)!
 
 ```
-./cgol --rule B0/S8 -x
+./cgol --rule B0/S8
 ```
 
 ![Image](img/customrule.png)

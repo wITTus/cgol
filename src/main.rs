@@ -7,10 +7,10 @@ use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
 
-use crate::game::Game;
 use crate::field::Field;
-use crate::term::*;
+use crate::game::Game;
 use crate::rule::AutomataRule;
+use crate::term::*;
 
 mod game;
 mod field;
@@ -27,10 +27,9 @@ fn main() {
         .arg(Arg::with_name("rows").short('r').about("Number of rows").takes_value(true))
         .arg(Arg::with_name("columns").short('c').about("Number of columns").takes_value(true))
         .arg(Arg::with_name("interval").short('t').about("Tick interval (in ms)").takes_value(true))
-        .arg(Arg::with_name("pattern").short('p').about("Load pattern from file").takes_value(true))
         .arg(Arg::with_name("highres").short('x').about("Use high resolution"))
-        .arg(Arg::with_name("mark").short('m').about("Mark pattern"))
-        .arg(Arg::with_name("insert").short('i').about("Insert pattern"))
+        .arg(Arg::with_name("mark").short('m').takes_value(true).about("Mark pattern"))
+        .arg(Arg::with_name("insert").short('i').takes_value(true).about("Insert pattern"))
         .arg(Arg::with_name("mode").long("mode").possible_values(&["random", "empty"]))
         .arg(Arg::with_name("rule").long("rule").takes_value(true).about("Cellular automaton rule, e.g. B36/S23 for highlife."))
         .get_matches();
@@ -50,9 +49,8 @@ fn main() {
         .unwrap_or(TERM_DEFAULT_COLUMNS);
 
     let interval = matches.value_of("interval").map(|v| v.parse::<u64>().unwrap()).unwrap_or(30);
-    let pattern = matches.value_of("pattern").map(|p| Field::from_file(p).expect("Couldn't open file"));
-    let mark = matches.is_present("mark");
-    let insert = matches.is_present("insert");
+    let mark = matches.value_of("mark").map(|p| Field::from_file(p).expect("Couldn't open file"));
+    let insert = matches.value_of("insert").map(|p| Field::from_file(p).expect("Couldn't open file"));
     let mode = matches.value_of("mode");
     let rule = matches.value_of("rule").map(|r| AutomataRule::from(r)).unwrap_or_else(AutomataRule::cgol);
 
@@ -64,9 +62,7 @@ fn main() {
         _ => Field::from_random(rows, columns)
     };
 
-    if insert {
-        if let Some(p) = pattern.clone() { field.insert(p) }
-    }
+    if let Some(pattern) = insert.clone() { field.insert(pattern) }
 
     let mut game = Game::new(field, rule);
 
@@ -82,9 +78,7 @@ fn main() {
         thread::sleep(time::Duration::from_millis(interval));
         game.next_iteration();
 
-        if mark {
-            if let Some(p) = pattern.as_ref() { game.mark_pattern(p) }
-        }
+        if let Some(pattern) = mark.as_ref() { game.mark_pattern(pattern) }
     }
 }
 
