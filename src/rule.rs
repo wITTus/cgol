@@ -1,3 +1,5 @@
+use regex::Regex;
+
 pub struct AutomataRule {
     b: [bool; 9],
     s: [bool; 9],
@@ -15,11 +17,12 @@ impl AutomataRule {
 
 impl From<&str> for AutomataRule {
     fn from(txt: &str) -> Self {
-        let vec: Vec<&str> = txt.split('/').collect();
-
-        if vec.len() != 2 {
-            panic!("Unknown rule format");
+        let re = Regex::new(r"B([0-8]+)?/S([0-8]+)?").unwrap();
+        if !re.is_match(txt) {
+            panic!("Unknown rule format \"{}\"", txt);
         }
+
+        let vec: Vec<&str> = txt.split('/').collect();
 
         let mut b = [false; 9];
         let mut s = [false; 9];
