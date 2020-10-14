@@ -30,7 +30,7 @@ fn main() {
         .arg(Arg::with_name("highres").short('x').about("Use high resolution"))
         .arg(Arg::with_name("mark").short('m').takes_value(true).about("Mark pattern"))
         .arg(Arg::with_name("insert").short('i').takes_value(true).about("Insert pattern"))
-        .arg(Arg::with_name("mode").long("mode").possible_values(&["random", "empty"]))
+        .arg(Arg::with_name("mode").long("mode").possible_values(&["empty", "random", "gaussian"]))
         .arg(Arg::with_name("rule").long("rule").takes_value(true).about("Cellular automaton rule, e.g. B36/S23 for highlife."))
         .get_matches();
 
@@ -59,6 +59,7 @@ fn main() {
     let mut field = match mode {
         Some("empty") => Field::with_size(rows, columns),
         Some("random") => Field::from_random(rows, columns),
+        Some("gaussian") => Field::from_normal_distribution(rows, columns),
         _ => Field::from_random(rows, columns)
     };
 

@@ -3,6 +3,7 @@ use std::cmp::min;
 use std::ffi::OsStr;
 use std::path::Path;
 
+use itertools::Itertools;
 use pest::Parser;
 use rand::Rng;
 
@@ -80,7 +81,21 @@ impl<T> Field<T> {
 impl Field<bool> {
     pub fn from_random(rows: usize, columns: usize) -> Field<bool> {
         let mut rng = rand::thread_rng();
-        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
+        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.05)).collect::<Vec<bool>>();
+
+        Field::new(cells, rows, columns)
+    }
+
+    pub fn from_normal_distribution(rows: usize, columns: usize) -> Field<bool> {
+        let x0 = columns as f64 / 2.0;
+        let y0 = rows as f64 / 2.0;
+        let sx = columns as f64 / 10.0;
+        let sy = rows as f64 / 10.0;
+        let p = |r, c| gaussian_2d(1.0, c, r, x0, y0, sx, sy);
+
+        let mut rng = rand::thread_rng();
+        let cells = (0..rows).cartesian_product(0..columns)
+            .map(|(r, c)| rng.gen_bool(p(r as f64, c as f64))).collect::<Vec<bool>>();
 
         Field::new(cells, rows, columns)
     }
@@ -189,6 +204,12 @@ impl Field<bool> {
 
 pub fn wrap(pos: usize, delta: i32, lim: usize) -> usize {
     (pos as i32 + delta).rem_euclid(lim as i32) as usize
+}
+
+fn gaussian_2d(a: f64, x: f64, y: f64, x0: f64, y0: f64, sx: f64, sy: f64) -> f64 {
+    let two_sigma_sq_x = 2.0 * sx.powi(2);
+    let two_sigma_sq_y = 2.0 * sy.powi(2);
+    a * (-((x - x0).powi(2) / two_sigma_sq_x + (y - y0).powi(2) / two_sigma_sq_y)).exp()
 }
 
 fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
