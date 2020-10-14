@@ -5,12 +5,12 @@ use std::path::Path;
 
 use pest::Parser;
 use rand::Rng;
+
 use crate::rule::AutomataRule;
 
 #[derive(Parser)]
 #[grammar = "../rle.pest"]
 struct RleParser;
-
 
 #[derive(Clone)]
 pub struct Field<T> {
@@ -124,64 +124,55 @@ impl Field<bool> {
         let mut columns = 0;
 
         for pair in pairs.clone() {
-            match pair.as_rule() {
-                Rule::config => {
-                    for p in pair.into_inner() {
-                        match p.as_rule() {
-                            Rule::x_expr => columns = p.into_inner().next().unwrap().as_str().parse::<usize>().unwrap(),
-                            Rule::y_expr => rows = p.into_inner().next().unwrap().as_str().parse::<usize>().unwrap(),
-                            _ => {}
-                        }
+            if let Rule::config = pair.as_rule() {
+                for p in pair.into_inner() {
+                    match p.as_rule() {
+                        Rule::x_expr => columns = p.into_inner().next().unwrap().as_str().parse::<usize>().unwrap(),
+                        Rule::y_expr => rows = p.into_inner().next().unwrap().as_str().parse::<usize>().unwrap(),
+                        _ => {}
                     }
                 }
-                _ => {}
             }
         }
 
         let mut cells = vec![false; rows * columns];
         for pair in pairs {
-            match pair.as_rule() {
-                Rule::pattern => {
-                    let mut r = 0usize;
-                    let mut c = 0usize;
+            if let Rule::pattern = pair.as_rule() {
+                let mut r = 0usize;
+                let mut c = 0usize;
 
-                    for p in pair.into_inner() {
-                        match p.as_rule() {
-                            Rule::seq => {
-                                let mut it = p.into_inner();
-                                let first = it.next().unwrap();
-                                let second = it.next();
-                                let (n, tag) = match first.as_rule() {
-                                    Rule::number => {
-                                        let n = first.as_str().parse::<usize>().unwrap();
-                                        let t = second.unwrap().as_str();
-                                        (n, t)
-                                    }
-                                    Rule::tag => {
-                                        let n = 1;
-                                        let t = first.as_str();
-                                        (n, t)
-                                    }
-                                    _ => unreachable!()
-                                };
-
-                                tag.repeat(n).chars().for_each(|t| match t {
-                                    '$' => {
-                                        r += 1;
-                                        c = 0;
-                                    }
-                                    any => {
-                                        let pos = c + r * columns;
-                                        cells[pos] = any == 'o';
-                                        c += 1;
-                                    }
-                                });
+                for p in pair.into_inner() {
+                    if let Rule::seq = p.as_rule() {
+                        let mut it = p.into_inner();
+                        let first = it.next().unwrap();
+                        let second = it.next();
+                        let (n, tag) = match first.as_rule() {
+                            Rule::number => {
+                                let n = first.as_str().parse::<usize>().unwrap();
+                                let t = second.unwrap().as_str();
+                                (n, t)
                             }
-                            _ => {}
+                            Rule::tag => {
+                                let n = 1;
+                                let t = first.as_str();
+                                (n, t)
+                            }
+                            _ => unreachable!()
                         };
-                    }
+
+                        tag.repeat(n).chars().for_each(|t| match t {
+                            '$' => {
+                                r += 1;
+                                c = 0;
+                            }
+                            any => {
+                                let pos = c + r * columns;
+                                cells[pos] = any == 'o';
+                                c += 1;
+                            }
+                        });
+                    };
                 }
-                _ => {}
             }
         }
         Field { cells, rows, columns }
@@ -220,7 +211,7 @@ fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
         .count()
 }
 
-impl <T: PartialEq> PartialEq for Field<T> {
+impl<T: PartialEq> PartialEq for Field<T> {
     fn eq(&self, other: &Self) -> bool {
         self.rows == other.rows && self.columns == other.columns && self.cells == other.cells
     }

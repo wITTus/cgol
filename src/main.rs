@@ -52,7 +52,7 @@ fn main() {
     let mark = matches.value_of("mark").map(|p| Field::from_file(p).expect("Couldn't open file"));
     let insert = matches.value_of("insert").map(|p| Field::from_file(p).expect("Couldn't open file"));
     let mode = matches.value_of("mode");
-    let rule = matches.value_of("rule").map(|r| AutomataRule::from(r)).unwrap_or_else(AutomataRule::cgol);
+    let rule = matches.value_of("rule").map(AutomataRule::from).unwrap_or_else(AutomataRule::cgol);
 
     let mut stdout = stdout();
 
@@ -62,7 +62,7 @@ fn main() {
         _ => Field::from_random(rows, columns)
     };
 
-    if let Some(pattern) = insert.clone() { field.insert(pattern) }
+    if let Some(pattern) = insert { field.insert(pattern) }
 
     let mut game = Game::new(field, rule);
 
