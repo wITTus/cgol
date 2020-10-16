@@ -81,7 +81,7 @@ impl<T> Field<T> {
 impl Field<bool> {
     pub fn from_random(rows: usize, columns: usize) -> Field<bool> {
         let mut rng = rand::thread_rng();
-        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.05)).collect::<Vec<bool>>();
+        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
 
         Field::new(cells, rows, columns)
     }
@@ -195,7 +195,7 @@ impl Field<bool> {
     }
 
     pub fn calculate_neighbours(&self, cells_2d: &[&[bool]]) -> Vec<usize> {
-        self.cells.iter().enumerate().map(|(i, _)| neighbours(&cells_2d, i % self.columns, i / self.columns)).collect()
+        self.cells.iter().enumerate().map(|(i, _)| neighbours(cells_2d, i % self.columns, i / self.columns)).collect()
     }
 
     pub fn apply_rule(&self, neighbour_field: Vec<usize>, rule: &AutomataRule) -> Vec<bool> {
@@ -292,4 +292,49 @@ mod tests {
             assert_eq!(4, n);
         }
     }
+
+    /*
+    use std::time::Instant;
+
+    #[test]
+    fn test_benchmark() {
+        let (r, c) = (1440, 2560);
+        let field = Field::from_random(r, c);
+        let rule = AutomataRule::cgol();
+        let p = field.proj2d();
+
+        let t0 = benchmark(10, || {
+            field.proj2d();
+        });
+
+        let t1 = benchmark(10, || {
+            field.calculate_neighbours(&p);
+        });
+
+        let t2 = benchmark(10, || {
+            let n = field.calculate_neighbours(&p);
+            field.apply_rule(n, &rule);
+        }) - t1;
+
+        let t3 = benchmark(10, || {
+            let p = Field::from_random(10, 10);
+            field.find_pattern(&p);
+        });
+
+        println!("Field{{{},{}}}", r, c);
+        println!("proj2d(): {}ms", t0);
+        println!("calculate_neighbours(): {}ms", t1);
+        println!("apply_rule(): {}ms", t2);
+        println!("find_pattern(): {}ms", t3);
+    }
+
+    fn benchmark<T>(trials: usize, mut f: T) -> u128
+        where T: FnMut() -> () {
+        let start = Instant::now();
+
+        (0..trials).for_each(|_| f());
+
+        start.elapsed().as_millis() / trials as u128
+    }
+    */
 }
