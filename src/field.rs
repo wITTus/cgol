@@ -32,14 +32,16 @@ impl<T> Field<T> {
         Field::new(cells, rows, columns)
     }
 
-    pub fn insert(&mut self, pattern: Field<T>)
+    pub fn insert(&mut self, pattern: Field<T>, row: usize, column: usize)
         where T: Copy
     {
         let pattern_2d = pattern.proj2d();
 
         for r in 0..min(pattern.rows, self.rows) {
             for c in 0..min(pattern.columns, self.columns) {
-                self.cells[r * self.columns + c] = pattern_2d[r][c];
+                let rr = wrap(r, row as i32, self.rows);
+                let cc = wrap(c, column as i32, self.columns);
+                self.cells[rr * self.columns + cc] = pattern_2d[r][c];
             }
         }
     }
@@ -291,6 +293,26 @@ mod tests {
             let n = neighbours(&r, 0, 0);
             assert_eq!(4, n);
         }
+    }
+
+    #[test]
+    fn test_insert() {
+        let glider = Field::from_cells("\
+.O.
+..O
+OOO");
+        let mut empty = Field::with_size(6, 6);
+        empty.insert(glider, 3, 4);
+
+        let expected = Field::from_cells("\
+......
+......
+......
+.....O
+O.....
+O...OO");
+
+        assert_eq!(expected.cells, empty.cells);
     }
 
     /*

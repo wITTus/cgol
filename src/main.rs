@@ -63,7 +63,7 @@ fn main() {
         _ => Field::from_random(rows, columns)
     };
 
-    if let Some(pattern) = insert { field.insert(pattern) }
+    if let Some(pattern) = insert { field.insert(pattern, 0, 0) }
 
     let mut game = Game::new(field, rule);
 
