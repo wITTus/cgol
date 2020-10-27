@@ -12,6 +12,14 @@ pub fn colormap_gb(n: u32) -> String {
     }
 }
 
+#[allow(unused)]
+pub fn colormap_rgb(n: u32) -> String {
+    match n < 256 {
+        true => format!("\x1b[38;2;128;{};128m", 255 - n),
+        false => String::from("\x1b[38;2;128;0;128m"),
+    }
+}
+
 pub const fn gfx_cls() -> &'static str {
     "\x1B[2J\x1B[1;1H"
 }
@@ -20,20 +28,16 @@ pub const fn gfx_pos1() -> &'static str {
     "\x1B[1;1H"
 }
 
-pub fn gfx_cell(alive: bool, color: String) -> String {
-    let s = "\u{2588}";
-
+pub fn gfx_cell(alive: bool) -> &'static str {
     match alive {
-        true => color + s,
-        false => String::from(" ")
+        true => "\u{2588}",
+        false => " "
     }
 }
 
-pub fn gfx_cell_highres(ul: bool, ur: bool, bl: bool, br: bool, color: String) -> String {
-    let ws = " ".to_string();
-
-    let symbol = match (ul, ur, bl, br) {
-        (false, false, false, false) => ws.as_str(),
+pub fn gfx_cell_highres(ul: bool, ur: bool, bl: bool, br: bool) -> &'static str {
+    match (ul, ur, bl, br) {
+        (false, false, false, false) => " ",
         (false, false, false, true) => "\u{2597}",
         (false, false, true, false) => "\u{2596}",
         (false, false, true, true) => "\u{2584}",
@@ -49,11 +53,6 @@ pub fn gfx_cell_highres(ul: bool, ur: bool, bl: bool, br: bool, color: String) -
         (true, true, false, true) => "\u{259C}",
         (true, true, true, false) => "\u{259B}",
         (true, true, true, true) => "\u{2588}",
-    };
-
-    match symbol {
-        " " => ws,
-        s => color + s
     }
 }
 

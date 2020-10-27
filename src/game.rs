@@ -58,16 +58,25 @@ impl Game {
         output += gfx_pos1();
         output += hline.as_str();
         output += "\n";
+
+        let mut current_color = String::new();
         //output += "\x1B[38;5;1m  012345678901234567890\n";
         for r in 0..self.field.rows {
             //output += format!("{:0w$}", r.to_string(), w=2).as_str();
             for c in 0..self.field.columns {
                 let idx = r * self.field.columns + c;
+
                 let alive = self.field.cells[idx];
+                let gfx = gfx_cell(alive);
+
                 let age = self.ages.cells[idx];
                 let color = if self.marked.cells[idx] { "\x1B[38;5;1m".to_string() } else { colormap_gb(age) };
-                let gfx = gfx_cell(alive, color);
-                output += gfx.as_str();
+
+                if gfx != " " && color != current_color {
+                    output += color.as_str();
+                    current_color = color;
+                }
+                output += gfx;
             }
             output += "\n";
         }
@@ -83,6 +92,8 @@ impl Game {
         output += gfx_pos1();
         output += hline.as_str();
         output += "\n";
+
+        let mut current_color = String::new();
         for r in (0..self.field.rows).step_by(2) {
             for c in (0..self.field.columns).step_by(2) {
                 let index = |r, c| r * self.field.columns + c;
@@ -96,15 +107,22 @@ impl Game {
                 let alive_bl = *self.field.cells.get(idxbl).unwrap_or(&false);
                 let alive_br = *self.field.cells.get(idxbr).unwrap_or(&false);
 
+                let gfx = gfx_cell_highres(alive_ul, alive_ur, alive_bl, alive_br);
+
                 let age_ul = *self.ages.cells.get(idxul).unwrap();
                 let age_ur = *self.ages.cells.get(idxur).unwrap_or(&0);
                 let age_bl = *self.ages.cells.get(idxbl).unwrap_or(&0);
                 let age_br = *self.ages.cells.get(idxbr).unwrap_or(&0);
-
                 let age = (age_ul + age_ur + age_bl + age_br) / 4;
+
                 let color = if self.marked.cells[idxul] { "\x1B[38;5;1m".to_string() } else { colormap_gb(age) };
-                let gfx = gfx_cell_highres(alive_ul, alive_ur, alive_bl, alive_br, color);
-                output += gfx.as_str();
+
+                if gfx != " " && color != current_color {
+                    output += color.as_str();
+                    current_color = color;
+                }
+
+                output += gfx;
             }
             output += "\n";
         }
