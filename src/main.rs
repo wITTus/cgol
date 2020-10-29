@@ -6,6 +6,7 @@ use std::{thread, time};
 use std::io::{stdout, Stdout, Write};
 
 use clap::{App, Arg};
+use futures::executor::block_on;
 
 use crate::field::Field;
 use crate::game::Game;
@@ -67,24 +68,37 @@ fn main() {
 
     let mut game = Game::new(field, rule);
 
-    print(&mut stdout, gfx_cls());
+    block_on(print(&mut stdout, gfx_cls()));
 
     loop {
-        let gfx = match highres {
-            true => game.to_string_highres(),
-            false => game.to_string()
+        let perf_complete = time::Instant::now();
+        block_on(iteration(highres, &mark, &mut stdout, &mut game));
+        let perf_complete_ms = perf_complete.elapsed().as_millis();
+
+        if interval - perf_complete_ms as u64 > 0 {
+            thread::sleep(time::Duration::from_millis(interval));
         };
-
-        print(&mut stdout, gfx.as_str());
-        thread::sleep(time::Duration::from_millis(interval));
-        game.next_iteration();
-
-        if let Some(pattern) = mark.as_ref() { game.mark_pattern(pattern) }
     }
 }
 
+async fn iteration(highres: bool, mark: &Option<Field<bool>>, stdout: &mut Stdout, game: &mut Game) {
+    let gfx = match highres {
+        true => game.to_string_highres(),
+        false => game.to_string()
+    };
+
+    let future_print = print(stdout, gfx.as_str());
+    let future_cells = async {
+        game.next_iteration().await;
+        if let Some(pattern) = mark.as_ref() { game.mark_pattern(pattern) }
+    };
+
+    futures::join!(future_print, future_cells);
+}
+
+
 #[allow(unused_must_use)]
-fn print(stdout: &mut Stdout, field: &str) {
+async fn print(stdout: &mut Stdout, field: &str) {
     stdout.write(field.as_bytes());
     stdout.flush();
 }

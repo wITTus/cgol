@@ -18,7 +18,7 @@ impl Game {
         Game { field, ages, marked, rule, iterations }
     }
 
-    pub fn next_iteration(&mut self) {
+    pub async fn next_iteration(&mut self) {
         let cells_2d = self.field.proj2d();
         let neighbours = self.field.calculate_neighbours(&cells_2d);
         let new_cells = self.field.apply_rule(neighbours, &self.rule);

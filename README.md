@@ -31,11 +31,13 @@ cd target/release
 
 ### High Resolution Mode
 
-Make the font size of your terminal very small (e.g. via `ctrl +/-`). Then:
+Make the font size of your terminal very small (e.g. via `Ctrl +/-`). Then:
 
 ```
 ./cgol -x
 ```
+
+This works best with fast terminal emulators (e.g. [Alacritty](https://github.com/alacritty/alacritty)).
 
 ![Image](img/highres.png "2474x450 cells")
 
