@@ -82,8 +82,8 @@ impl<T> Field<T> {
 
 impl Field<bool> {
     pub fn from_random(rows: usize, columns: usize) -> Field<bool> {
-        let mut rng = rand::thread_rng();
-        let cells = (0..columns * rows).map(|_| rng.gen_bool(0.5)).collect::<Vec<bool>>();
+        let mut rng = rand::rng();
+        let cells = (0..columns * rows).map(|_| rng.random_bool(0.5)).collect::<Vec<bool>>();
 
         Field::new(cells, rows, columns)
     }
@@ -95,9 +95,9 @@ impl Field<bool> {
         let sy = rows as f64 / 10.0;
         let p = |r, c| gaussian_2d(c, r, x0, y0, sx, sy);
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let cells = (0..rows).cartesian_product(0..columns)
-            .map(|(r, c)| rng.gen_bool(p(r as f64, c as f64)))
+            .map(|(r, c)| rng.random_bool(p(r as f64, c as f64)))
             .collect::<Vec<bool>>();
 
         Field::new(cells, rows, columns)
@@ -231,7 +231,7 @@ fn neighbours(cells_2d: &[&[bool]], x: usize, y: usize) -> usize {
     ]
         .iter()
         .map(|(x, y)| cells_2d[*y][*x])
-        .filter(|i| { matches!(i, true) })
+        .filter(|i| *i)
         .count()
 }
 

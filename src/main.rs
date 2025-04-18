@@ -99,6 +99,6 @@ async fn iteration(highres: bool, mark: &Option<Field<bool>>, stdout: &mut Stdou
 
 #[allow(unused_must_use)]
 async fn print(stdout: &mut Stdout, field: &str) {
-    stdout.write(field.as_bytes());
+    stdout.write_all(field.as_bytes());
     stdout.flush();
 }
